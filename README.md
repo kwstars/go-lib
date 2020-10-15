@@ -1,3 +1,4 @@
+- [x] google/wire
 - [ ] xorm.io/xorm
 - [ ] spf13/viper
 - [ ] uber-go/zap
