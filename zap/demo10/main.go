@@ -5,6 +5,7 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"net/http"
+	"time"
 )
 
 var sugarLogger *zap.SugaredLogger
@@ -24,18 +25,29 @@ func InitLogger() {
 	sugarLogger = logger.Sugar()
 }
 
+func SyslogTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
+	enc.AppendString(t.Format("Jan  2 15:04:05"))
+}
+
+func CustomLevelEncoder(level zapcore.Level, enc zapcore.PrimitiveArrayEncoder) {
+	enc.AppendString("[" + level.CapitalString() + "]")
+}
+
 func getEncoder() zapcore.Encoder {
 	encoderConfig := zap.NewProductionEncoderConfig()
-	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-	encoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
-	//return zapcore.NewConsoleEncoder(encoderConfig)
-	return zapcore.NewJSONEncoder(encoderConfig)
+	//encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	encoderConfig.EncodeTime = SyslogTimeEncoder
+	//encoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
+	encoderConfig.EncodeLevel = CustomLevelEncoder
+	encoderConfig.FunctionKey = "function"
+	return zapcore.NewConsoleEncoder(encoderConfig)
+	//return zapcore.NewJSONEncoder(encoderConfig)
 }
 
 func getLogWriter() zapcore.WriteSyncer {
 	lumberJackLogger := &lumberjack.Logger{
-		Filename:   "./test.log",
-		MaxSize:    10,
+		Filename: "./test.log",
+		//MaxSize:    10,
 		MaxBackups: 5,
 		MaxAge:     24,
 		Compress:   false,
