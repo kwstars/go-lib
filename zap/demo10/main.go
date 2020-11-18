@@ -1,4 +1,4 @@
-package main
+package demo10
 
 import (
 	"github.com/natefinch/lumberjack"
@@ -8,21 +8,22 @@ import (
 	"time"
 )
 
-var sugarLogger *zap.SugaredLogger
+var SugarLogger *zap.SugaredLogger
 
-func main() {
-	InitLogger()
-	defer sugarLogger.Sync()
-	SimpleHttpGet("www.baidu.com")
-	SimpleHttpGet("http://www.baidu.com")
-}
+//func main() {
+//	InitLogger()
+//	defer SugarLogger.Sync()
+//	SimpleHttpGet("www.baidu.com")
+//	SimpleHttpGet("http://www.baidu.com")
+//}
 
 func InitLogger() {
 	writerSyncer := getLogWriter()
 	encoder := getEncoder()
 	core := zapcore.NewCore(encoder, writerSyncer, zapcore.DebugLevel)
 	logger := zap.New(core, zap.AddCaller())
-	sugarLogger = logger.Sugar()
+	zap.ReplaceGlobals(logger)
+	SugarLogger = logger.Sugar()
 }
 
 func SyslogTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
@@ -40,8 +41,8 @@ func getEncoder() zapcore.Encoder {
 	//encoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
 	encoderConfig.EncodeLevel = CustomLevelEncoder
 	encoderConfig.FunctionKey = "function"
-	return zapcore.NewConsoleEncoder(encoderConfig)
-	//return zapcore.NewJSONEncoder(encoderConfig)
+	//return zapcore.NewConsoleEncoder(encoderConfig)
+	return zapcore.NewJSONEncoder(encoderConfig)
 }
 
 func getLogWriter() zapcore.WriteSyncer {
@@ -56,12 +57,22 @@ func getLogWriter() zapcore.WriteSyncer {
 }
 
 func SimpleHttpGet(url string) {
-	sugarLogger.Debugf("Trying to hit GET request for %s", url)
+	SugarLogger.Debugf("Trying to hit GET request for %s", url)
 	resp, err := http.Get(url)
 	if err != nil {
-		sugarLogger.Errorf("Error fetching URL %s : Error = %s", url, err)
+		SugarLogger.Errorf("Error fetching URL %s : Error = %s", url, err)
+		//SugarLogger.Errorw("Error fetching URL",
+		//	"uid", 123455,
+		//	"test", "test",
+		//	"asdf", 12312,
+		//	)
+		zap.S().Errorw("Error fetching URL",
+			"uid", 123455,
+			"test", "test",
+			"asdf", 12312,
+			)
 	} else {
-		sugarLogger.Infof("Success! statusCode = %s for URL %s", resp.Status, url)
+		SugarLogger.Infof("Success! statusCode = %s for URL %s", resp.Status, url)
 		resp.Body.Close()
 	}
 }
